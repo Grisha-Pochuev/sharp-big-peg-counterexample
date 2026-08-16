@@ -20,12 +20,30 @@
     "radius": 1
   },
   "exact_certificate": {
+    "adjacent_turn_determinants": [
+      8097960,
+      -4710868,
+      442778,
+      1162185,
+      3425790,
+      3473810,
+      250870,
+      468454,
+      -2939658,
+      6244418
+    ],
     "minimum_boundary_distance_squared": {
       "numerator": 2403854890969,
       "denominator": 2400326560000
     },
     "valid_nonsingular_edge_assignments": 144,
     "positive_oriented_square_assignments": 4,
+    "positive_assignments": [
+      [2, 4, 5, 6],
+      [4, 5, 6, 2],
+      [5, 6, 2, 4],
+      [6, 2, 4, 5]
+    ],
     "singular_assignments": 10,
     "largest_square_edge_assignment": [2, 4, 5, 6],
     "largest_square_side_squared": {
