@@ -1,0 +1,40 @@
+{
+  "problem": "Sharp Polygonal Big Peg conjecture",
+  "challenge_author": "David Bernier",
+  "challenge_url": "https://dbernier.ca/2026/06/16/the-sharp-big-peg-conjecture/",
+  "coordinate_denominator": 1200,
+  "vertices_grid": [
+    [4114, -558],
+    [2022, 1568],
+    [-1234, 1006],
+    [-868, 2516],
+    [-1089, 2814],
+    [-3769, 1169],
+    [-3459, 81],
+    [141, -1348],
+    [571, -1449],
+    [1105, -485]
+  ],
+  "unit_disk": {
+    "center": [0, 0],
+    "radius": 1
+  },
+  "exact_certificate": {
+    "minimum_boundary_distance_squared": {
+      "numerator": 2403854890969,
+      "denominator": 2400326560000
+    },
+    "valid_nonsingular_edge_assignments": 144,
+    "positive_oriented_square_assignments": 4,
+    "singular_assignments": 10,
+    "largest_square_edge_assignment": [2, 4, 5, 6],
+    "largest_square_side_squared": {
+      "numerator": 56381275521625791352241234309,
+      "denominator": 28343589374868261752462760000
+    },
+    "two_minus_largest_square_side_squared": {
+      "numerator": 305903228110732152684285691,
+      "denominator": 28343589374868261752462760000
+    }
+  }
+}
