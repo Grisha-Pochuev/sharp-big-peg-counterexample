@@ -23,5 +23,8 @@ jobs:
       - name: Run original exact verifier
         run: python sharp_big_peg_counterexample_verify.py
 
-      - name: Run independent exact cross-check
+      - name: Run independent center-offset cross-check
         run: python independent_verify.py
+
+      - name: Run independent vertex-side cross-check
+        run: python independent_vertex_side_verify.py
