@@ -8,7 +8,7 @@ No floating-point decision is used.
 
 The polygon vertices are X[i] / D, in cyclic order.
 The script verifies:
-  (1) the polygon is simple;
+  (1) the polygon is simple, including non-overlap of adjacent edges;
   (2) the origin is in its bounded component;
   (3) every boundary segment has distance > 1 from the origin,
       hence the closed unit disk centered at the origin is contained inside;
@@ -40,6 +40,17 @@ X = [
     ( 1105,  -485),
 ]
 N = len(X)
+
+EXPECTED_MIN_D2 = Fraction(2403854890969, 2400326560000)
+EXPECTED_MAX_SIDE2 = Fraction(
+    56381275521625791352241234309,
+    28343589374868261752462760000,
+)
+EXPECTED_GAP = Fraction(
+    305903228110732152684285691,
+    28343589374868261752462760000,
+)
+EXPECTED_MAX_ASSIGNMENT = (2, 4, 5, 6)
 
 
 def orient(a, b, c):
@@ -96,7 +107,6 @@ def edge_distance_squared(i):
     e2 = ex * ex + ey * ey
     tnum = -(ax * ex + ay * ey)
     if 0 <= tnum <= e2:
-        # perpendicular foot is on the segment
         cr = ax * by - ay * bx
         return Fraction(cr * cr, e2 * D * D)
     return Fraction(min(ax * ax + ay * ay, bx * bx + by * by), D * D)
@@ -108,18 +118,15 @@ def build_square_system(assignment):
         ax, ay = X[e]
         bx, by = X[(e + 1) % N]
         dx, dy = bx - ax, by - ay
-        nx, ny = -dy, dx  # a normal to the supporting line
-
-        # Coefficients of u in n dot (the kth square corner).
-        if k == 0:       # c + u
+        nx, ny = -dy, dx
+        if k == 0:
             qx, qy = nx, ny
-        elif k == 1:     # c + J u = c + (-uy, ux)
+        elif k == 1:
             qx, qy = ny, -nx
-        elif k == 2:     # c - u
+        elif k == 2:
             qx, qy = -nx, -ny
-        else:            # c - J u = c + (uy, -ux)
+        else:
             qx, qy = -ny, nx
-
         M.append([nx, ny, qx, qy])
         b.append(nx * ax + ny * ay)
     return M, b
@@ -131,10 +138,22 @@ def build_square_system(assignment):
 assert N <= 64
 for i in range(N):
     assert X[i] != X[(i + 1) % N]
+
+# Adjacent edges share one prescribed endpoint.  To rule out any additional
+# overlap, check that each consecutive triple of vertices is non-collinear.
+# Distinct supporting lines through the common endpoint can meet only there.
+adjacent_turns = [
+    orient(X[i], X[(i + 1) % N], X[(i + 2) % N])
+    for i in range(N)
+]
+assert all(t != 0 for t in adjacent_turns), ("collinear adjacent edges", adjacent_turns)
+
+# Every non-adjacent pair of closed edges is then checked for intersection.
+for i in range(N):
     a, b = X[i], X[(i + 1) % N]
     for j in range(i + 1, N):
         if j == i + 1 or (i == 0 and j == N - 1):
-            continue  # adjacent edges share the expected endpoint
+            continue
         c, d = X[j], X[(j + 1) % N]
         assert not segments_intersect(a, b, c, d), ("self-intersection", i, j)
 
@@ -147,7 +166,6 @@ for i in range(N):
     x1, y1 = X[i]
     x2, y2 = X[(i + 1) % N]
     if (y1 > 0) != (y2 > 0):
-        # x coordinate where the segment hits y=0 is num/den.
         num = x1 * y2 - x2 * y1
         den = y2 - y1
         if den < 0:
@@ -162,6 +180,7 @@ assert positive_ray_crossings % 2 == 1
 # ---------------------------------------------------------------------------
 edge_d2 = [edge_distance_squared(i) for i in range(N)]
 min_boundary_d2 = min(edge_d2)
+assert min_boundary_d2 == EXPECTED_MIN_D2
 assert min_boundary_d2 > 1
 
 
@@ -181,14 +200,12 @@ for assignment in product(range(N), repeat=4):
         singular.append(assignment)
         continue
 
-    # Cramer's rule: (cx,cy,ux,uy) in grid units is nums / det.
     nums = [det4(replace_column(M, b, j)) for j in range(4)]
     if det < 0:
         det = -det
         nums = [-z for z in nums]
     cx, cy, ux, uy = nums
 
-    # Corner coordinates in grid units, each with denominator det.
     corners = [
         (cx + ux, cy + uy),
         (cx - uy, cy + ux),
@@ -196,8 +213,6 @@ for assignment in product(range(N), repeat=4):
         (cx + uy, cy - ux),
     ]
 
-    # Since each corner already lies on the supporting line, checking the
-    # segment parameter t in [0,1] is sufficient and exact.
     ok = True
     for k, e in enumerate(assignment):
         ax, ay = X[e]
@@ -220,12 +235,13 @@ for assignment in product(range(N), repeat=4):
         max_side2 = side2
         max_assignment = assignment
 
-# Every singular assignment puts all four square corners on one and the same
-# edge-line.  Four distinct corners of a nondegenerate square cannot be collinear.
 expected_singular = [(i, i, i, i) for i in range(N)]
 assert singular == expected_singular, singular
-
-# This is exactly the desired strict inequality side < sqrt(2).
+assert valid_nonsingular == 144
+assert positive_squares == 4
+assert max_assignment == EXPECTED_MAX_ASSIGNMENT
+assert max_side2 == EXPECTED_MAX_SIDE2
+assert 2 - max_side2 == EXPECTED_GAP
 assert max_side2 < 2
 
 
@@ -233,6 +249,7 @@ print("PASS: exact Sharp Big Peg counterexample certificate")
 print("vertices =", N)
 print("common_coordinate_denominator =", D)
 print("positive_ray_crossings =", positive_ray_crossings)
+print("adjacent_turn_determinants =", adjacent_turns)
 print("min_boundary_distance_squared =", min_boundary_d2)
 print("min_boundary_distance_squared_decimal =", float(min_boundary_d2))
 print("valid_nonsingular_edge_assignments =", valid_nonsingular)
