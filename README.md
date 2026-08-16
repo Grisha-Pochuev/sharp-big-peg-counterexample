@@ -2,25 +2,29 @@
 
 [![Exact verification](https://github.com/Grisha-Pochuev/sharp-big-peg-counterexample/actions/workflows/verify.yml/badge.svg)](https://github.com/Grisha-Pochuev/sharp-big-peg-counterexample/actions/workflows/verify.yml)
 
-This repository gives an explicit **10-vertex counterexample** to David Bernier's **Sharp Polygonal Big Peg conjecture**, together with a deterministic verifier using exact integer/rational arithmetic.
+This repository contains an explicit **10-vertex counterexample** to David Bernier's **Sharp Polygonal Big Peg conjecture**, together with exact, reproducible verification code.
 
-The original challenge was posted by David Bernier on June 16, 2026:
+David Bernier stated the challenge and offered a **$200 prize** for an explicit counterexample with at most 64 vertices:
 
 https://dbernier.ca/2026/06/16/the-sharp-big-peg-conjecture/
 
-## The problem
+## Problem
 
-Let `Q` be a simple closed polygonal curve whose bounded component contains a disk of radius `1`. The Sharp Polygonal Big Peg conjecture asserts that `Q` must have a square whose four vertices lie on the boundary of `Q` and whose side length is at least `sqrt(2)`.
+Let `Q` be a simple closed polygonal curve whose bounded component contains a disk of radius `1`. The Sharp Polygonal Big Peg conjecture asserts that `Q` has a square whose four vertices lie on the boundary of `Q` and whose side length is at least `sqrt(2)`.
 
-Bernier's challenge asks for an explicit counterexample with at most 64 polygon vertices, together with a rigorous exact or certified verification that every boundary-inscribed square has side length strictly less than `sqrt(2)`.
+A counterexample therefore needs to satisfy all of the following:
 
-## Result
+1. `Q` is a simple closed polygonal curve;
+2. its bounded component contains a unit disk;
+3. every square with all four vertices on the boundary has side length strictly less than `sqrt(2)`.
 
-We give such a counterexample using only **10 vertices**.
+The construction in this repository uses only **10 vertices**, well below the 64-vertex limit.
+
+## Counterexample
 
 Let `D = 1200`. In cyclic order, take
 
-| i | `D * x_i` | `D * y_i` |
+| i | `D x_i` | `D y_i` |
 |---|---:|---:|
 | 0 | 4114 | -558 |
 | 1 | 2022 | 1568 |
@@ -33,23 +37,34 @@ Let `D = 1200`. In cyclic order, take
 | 8 | 571 | -1449 |
 | 9 | 1105 | -485 |
 
-Thus `v_i = (x_i,y_i) = (X_i,Y_i)/1200`. Join consecutive vertices and join `v_9` back to `v_0`.
+Thus
 
-The exact certificate establishes:
+```text
+v_i = (x_i, y_i) = (X_i, Y_i) / 1200.
+```
 
-1. the polygon is simple;
-2. the origin lies in its bounded component;
-3. every boundary segment is at distance strictly greater than `1` from the origin, so the closed unit disk centered at the origin is contained in the polygon;
-4. every square whose four vertices lie on the polygon boundary has side length strictly less than `sqrt(2)`.
+Join consecutive vertices and join `v_9` back to `v_0`.
 
-The minimum squared distance from the origin to the polygon boundary is
+The full mathematical write-up is in [`SOLUTION.md`](SOLUTION.md). That file is the solution prepared in the project and is kept as the primary proof description.
+
+## Exact certificate
+
+The exact verification establishes:
+
+- the polygon is simple;
+- the origin belongs to its bounded component;
+- every boundary segment is at distance strictly greater than `1` from the origin, so the closed unit disk centered at the origin is contained inside;
+- all possible boundary-inscribed squares are exhausted by a finite exact calculation;
+- the largest such square has side strictly less than `sqrt(2)`.
+
+The minimum squared distance from the origin to the boundary is
 
 ```text
 2403854890969 / 2400326560000
 = 1.0014699378942005... > 1.
 ```
 
-The largest boundary-inscribed square has exact squared side length
+The exact squared side length of the largest boundary-inscribed square is
 
 ```text
 56381275521625791352241234309
@@ -58,82 +73,85 @@ The largest boundary-inscribed square has exact squared side length
 = 1.9892073221896882... < 2.
 ```
 
-In particular,
+Equivalently,
 
 ```text
 2 - L^2 =
 305903228110732152684285691
 -----------------------------------------------
 28343589374868261752462760000
-> 0,
+> 0.
 ```
 
-so `L < sqrt(2)`.
+Hence `L < sqrt(2)`.
 
-## Why the square search is exhaustive
+## Why the square enumeration is exhaustive
 
-Write an oriented square as
+Write an oriented square in cyclic order as
 
 ```text
-c + u,   c + J u,   c - u,   c - J u,
+c + u,  c + J u,  c - u,  c - J u,
 ```
 
-where `c` is the center and `J` is rotation through 90 degrees.
+where `J` is rotation by 90 degrees.
 
-Assign, in cyclic order, each of the four square corners to one of the ten polygon edges. There are exactly
+Each of the four square corners lies on one of the ten polygon edges. Therefore every square determines at least one ordered edge assignment
+
+```text
+(e0, e1, e2, e3) in {0,...,9}^4.
+```
+
+There are exactly
 
 ```text
 10^4 = 10000
 ```
 
-ordered assignments.
+such assignments.
 
-For a fixed assignment, requiring each square corner to lie on the supporting line of its assigned edge gives four linear equations in the four real unknowns
+For each assignment, the condition that each corner lie on the supporting line of its assigned edge gives a `4 x 4` linear system in the four unknown coordinates of `c` and `u`. For every nonsingular assignment there is at most one candidate. The candidate is retained only if every corner lies on its assigned **closed segment**, not merely its supporting line.
 
-```text
-c_x, c_y, u_x, u_y.
-```
+A square corner that lies exactly at a polygon vertex is not missed: that point belongs to the two adjacent closed edges, and all ordered edge assignments are enumerated.
 
-For every nonsingular assignment there is therefore at most one square. The verifier solves every such system exactly by integer determinants, then checks exactly whether each corner lies on the assigned **segment**, not merely on its supporting line.
-
-The exhaustive calculation finds:
+The exact calculation gives:
 
 ```text
 10000 total ordered edge assignments
 10 singular assignments
-144 nonsingular solutions with all four corners on their assigned segments
-4 positive-side oriented solutions
+144 nonsingular solutions with all four corners on the assigned segments
+4 positive-side oriented square assignments
 ```
 
-The four positive solutions are the four cyclic labelings of one geometric square. Its edge assignment is `(2,4,5,6)` up to cyclic relabeling.
+The ten singular assignments are exactly `(i,i,i,i)`, `i=0,...,9`. They require all four square corners to lie on one line and therefore cannot contain a nondegenerate square.
 
-The only singular assignments are `(i,i,i,i)` for `i = 0,...,9`; all four corners would then lie on one line, so none can represent a nondegenerate square.
+The four positive assignments are cyclic labelings of the same geometric square. One labeling is `(2,4,5,6)`.
 
-This enumeration also covers squares having a corner exactly at a polygon vertex: such a point lies on either adjacent segment, and all ordered segment assignments are enumerated.
+## Reproduce the original verification
 
-A fuller mathematical account is in [`SOLUTION.md`](SOLUTION.md).
+The primary verifier is the original project file:
 
-## Independent verification
+[`sharp_big_peg_counterexample_verify.py`](sharp_big_peg_counterexample_verify.py)
 
-The certificate is deliberately designed so that it does **not** require trusting floating-point geometry, numerical optimization, a proprietary solver, or any third-party Python package.
+It is dependency-free and uses only Python integers and `fractions.Fraction` for mathematical decisions. Floating point is used only for decimal output after all exact assertions have passed.
 
-Requirements:
-
-- Python 3;
-- the Python standard library only.
+Requirements: **Python 3 and the standard library only.**
 
 Run:
 
 ```bash
-python3 verify.py
+python3 sharp_big_peg_counterexample_verify.py
 ```
 
-Expected final certificate data:
+A successful run starts with
 
 ```text
 PASS: exact Sharp Big Peg counterexample certificate
+```
+
+and reports, among other values,
+
+```text
 vertices = 10
-common_coordinate_denominator = 1200
 positive_ray_crossings = 1
 min_boundary_distance_squared = 2403854890969/2400326560000
 valid_nonsingular_edge_assignments = 144
@@ -144,48 +162,83 @@ max_square_side_squared = 56381275521625791352241234309/283435893748682617524627
 2_minus_max_square_side_squared = 305903228110732152684285691/28343589374868261752462760000
 ```
 
-Every mathematical decision in `verify.py` uses Python integers or `fractions.Fraction`. Floating point is used only to print human-readable decimal approximations *after* the exact assertions have passed.
+## Independent cross-check
 
-### Verification without trusting this repository's calculations
+For additional protection against an implementation-specific error, the repository also contains a second exact implementation:
 
-An independent reviewer can reimplement the certificate from scratch using only the data in [`counterexample.json`](counterexample.json) and the mathematical procedure in [`SOLUTION.md`](SOLUTION.md):
+[`independent_verify.py`](independent_verify.py)
 
-1. test all non-adjacent polygon-edge pairs for intersection using orientation determinants;
-2. use an exact ray-crossing test to verify that the origin is inside;
-3. compute the exact point-to-segment distance for each of the ten edges and verify every value is greater than `1`;
-4. enumerate all `10^4` ordered assignments of square corners to polygon edges;
-5. solve the resulting four-by-four linear system for each assignment with exact rational arithmetic;
-6. retain a solution only when every corner lies on its assigned closed segment;
-7. compare the squared side length of every retained nondegenerate square with `2`.
+It intentionally uses different computational choices from the primary verifier:
 
-No heuristic or tolerance choice enters this verification.
+- **exact Gaussian elimination with `Fraction`** instead of determinant/Cramer's-rule solving;
+- an **exact winding-number test** for the origin instead of the primary positive-ray crossing implementation;
+- an **exact affine-parameter segment test** for candidate corners.
 
-## Automatic verification
+Run:
 
-The GitHub Actions workflow [`verify.yml`](.github/workflows/verify.yml) runs the exact verifier automatically on pushes and pull requests. A green workflow therefore means that the repository's published certificate has been reproduced from a clean Python environment.
+```bash
+python3 independent_verify.py
+```
 
-This is useful as a reproducibility check, but the workflow is not a substitute for inspecting the short mathematical argument and the verifier itself.
+It independently reproduces the same critical exact invariants and ends with
+
+```text
+PASS: independent exact cross-check
+```
+
+This second implementation is not logically necessary for the certificate, but agreement between two structurally different exact implementations makes accidental implementation error easier to detect.
+
+## Verification from scratch
+
+A reviewer does not need to trust either Python program. The raw construction and claimed exact invariants are also provided in machine-readable form:
+
+[`counterexample.json`](counterexample.json)
+
+A fresh implementation can independently do the following:
+
+1. read the ten rational vertices;
+2. test all non-adjacent polygon edges for intersection using exact arithmetic;
+3. verify that the origin is in the bounded component;
+4. compute the exact distance from the origin to each polygon segment and verify that the minimum squared distance is greater than `1`;
+5. enumerate all `10^4` ordered assignments of four square corners to ten polygon edges;
+6. for each assignment, solve the four supporting-line equations exactly;
+7. retain the candidate only when all four corners lie on their assigned closed segments;
+8. check that the only singular assignments are `(i,i,i,i)`;
+9. compare the exact squared side length of every nondegenerate retained square with `2`.
+
+No numerical tolerance, random search, nonlinear optimizer, SAT solver, proprietary software, or third-party Python package is required.
+
+## Automatic clean-environment verification
+
+GitHub Actions runs **both exact implementations** automatically on pushes and pull requests, under Python 3.10, 3.12, and 3.13:
+
+[`.github/workflows/verify.yml`](.github/workflows/verify.yml)
+
+The badge at the top of this README links to those runs. A green run means that both published checkers executed successfully from a fresh GitHub-hosted environment on all configured Python versions.
+
+The automated run is a reproducibility aid; the proof of completeness of the finite enumeration is explained in [`SOLUTION.md`](SOLUTION.md) and above so that the checker itself can be audited or independently reimplemented.
 
 ## Repository contents
 
-- [`README.md`](README.md) — problem, counterexample, headline certificate, and reproduction instructions.
-- [`SOLUTION.md`](SOLUTION.md) — detailed mathematical argument explaining why the finite computation is exhaustive.
-- [`verify.py`](verify.py) — dependency-free exact verifier.
-- [`counterexample.json`](counterexample.json) — machine-readable polygon data and claimed exact invariants.
-- [`.github/workflows/verify.yml`](.github/workflows/verify.yml) — automatic clean-environment verification.
+- [`SOLUTION.md`](SOLUTION.md) — mathematical solution from the project sources.
+- [`sharp_big_peg_counterexample_verify.py`](sharp_big_peg_counterexample_verify.py) — original exact dependency-free verification certificate from the project sources.
+- [`independent_verify.py`](independent_verify.py) — second exact implementation using a different linear-system solver and containment test.
+- [`counterexample.json`](counterexample.json) — machine-readable construction and exact certificate values.
+- [`.github/workflows/verify.yml`](.github/workflows/verify.yml) — automatic reproduction of both verifiers.
 
-## Reproducibility principles
+## Reproducibility properties
 
-The verifier is:
+The verification is designed to be:
 
-- **deterministic** — no random choices;
+- **exact** — correctness does not depend on floating-point comparisons;
 - **exhaustive** — all 10,000 ordered edge assignments are considered;
-- **exact** — no floating-point predicate decides correctness;
-- **dependency-free** — only the Python standard library is needed;
-- **small enough to audit** — the complete checker is a single source file.
+- **deterministic** — no randomness is involved;
+- **dependency-free** — standard Python is sufficient;
+- **auditable** — the construction, proof description, code, and exact output values are all public;
+- **independently reproducible** — the raw rational data are separated from the implementation.
 
-## Citation / contact
+## Author and contact
 
 Repository maintained by **Grisha Pochuev**.
 
-If you independently verify the result, find an error, or produce a second implementation of the certificate, opening an issue in this repository is welcome.
+Independent checks, alternative implementations, bug reports, and mathematical criticism are welcome through GitHub issues.
