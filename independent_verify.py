@@ -28,6 +28,7 @@ EXPECTED_GAP = Fraction(
     305903228110732152684285691,
     28343589374868261752462760000,
 )
+EXPECTED_MAX_ASSIGNMENT = (2, 4, 5, 6)
 
 
 def cross(ax, ay, bx, by):
@@ -59,7 +60,6 @@ def closed_segments_intersect(a, b, c, d):
 
 
 def winding_number_origin():
-    """Exact winding number of polygon around the origin."""
     w = 0
     for i in range(N):
         a = X[i]
@@ -95,13 +95,13 @@ def build_system(assignment):
         bx, by = X[(e + 1) % N]
         dx, dy = bx - ax, by - ay
         nx, ny = -dy, dx
-        if k == 0:      # c + u
+        if k == 0:
             uxcoef, uycoef = nx, ny
-        elif k == 1:    # c + Ju
+        elif k == 1:
             uxcoef, uycoef = ny, -nx
-        elif k == 2:    # c - u
+        elif k == 2:
             uxcoef, uycoef = -nx, -ny
-        else:           # c - Ju
+        else:
             uxcoef, uycoef = -ny, nx
         rows.append([Fraction(nx), Fraction(ny), Fraction(uxcoef), Fraction(uycoef)])
         rhs.append(Fraction(nx * ax + ny * ay))
@@ -109,7 +109,6 @@ def build_system(assignment):
 
 
 def solve_4x4(A, b):
-    """Exact Gaussian elimination. Return tuple solution or None if singular."""
     M = [row[:] + [b[i]] for i, row in enumerate(A)]
     n = 4
     for col in range(n):
@@ -156,6 +155,9 @@ def fraction_point_on_grid_segment(p, e):
 assert N == 10 and N <= 64
 for i in range(N):
     assert X[i] != X[(i + 1) % N]
+adjacent_turns = [orient(X[i], X[(i + 1) % N], X[(i + 2) % N]) for i in range(N)]
+assert all(t != 0 for t in adjacent_turns)
+for i in range(N):
     for j in range(i + 1, N):
         if j == i + 1 or (i == 0 and j == N - 1):
             continue
@@ -198,13 +200,20 @@ for assignment in product(range(N), repeat=4):
 assert singular == [(i, i, i, i) for i in range(N)]
 assert valid == 144
 assert len(positive) == 4
-assert max_assignment == (2, 4, 5, 6)
+assert [a for a, _ in positive] == [
+    (2, 4, 5, 6),
+    (4, 5, 6, 2),
+    (5, 6, 2, 4),
+    (6, 2, 4, 5),
+]
+assert max_assignment == EXPECTED_MAX_ASSIGNMENT
 assert max_side2 == EXPECTED_MAX_SIDE2
 assert 2 - max_side2 == EXPECTED_GAP
 assert max_side2 < 2
 
 print("PASS: independent exact cross-check")
 print("winding_number =", w)
+print("adjacent_turn_determinants =", adjacent_turns)
 print("min_boundary_distance_squared =", min_d2)
 print("valid_nonsingular_edge_assignments =", valid)
 print("positive_oriented_square_assignments =", len(positive))
